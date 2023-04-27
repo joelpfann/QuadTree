@@ -6,6 +6,14 @@ class Boundary():
         self.y = y
         self.w = w
         self.h = h
+
+        if self.w < 0:
+            self.x = x + w
+            self.w = abs(w)
+        
+        if self.h < 0:
+            self.y = y + h
+            self.h = abs(h)
         
 
 
@@ -82,27 +90,42 @@ class QuadTree():
 
 
     
-def show(quadtree, surface, pygame):
+def show(quadtree, surface, search_boundary, contained_points, pygame):
 
-    rect_dim = [quadtree.boundary.x, quadtree.boundary.y, quadtree.boundary.w, quadtree.boundary.h]
-
-    color = [255, 0, 0]
-
-    pygame.draw.rect(surface, color, pygame.Rect(rect_dim), width=1)
+    # If top-level of tree
+    if quadtree.level == 0:
+        contained_points = quadtree.return_contained_points(search_boundary, [])
+        pygame.Surface.fill(surface, [0,0,0])
     
+
+    # Draw boundary of tree node
+    rect_dim = [quadtree.boundary.x, quadtree.boundary.y, quadtree.boundary.w, quadtree.boundary.h]
+    pygame.draw.rect(surface, [255, 0, 0], pygame.Rect(rect_dim), width=1)
+
+
+    # Draw points in different colors
     for i in range(0, len(quadtree.points)):
         if quadtree.divided:
             color = [0, 255, 0]
         else:
             color = [0, 0, 255]
+
+        if quadtree.points[i] in contained_points:
+            color = [255, 255, 255]
+
         pygame.draw.circle(surface, color, quadtree.points[i], 2)
 
+    # Perform recursion if tree node has child nodes
     if quadtree.divided:
-        show(quadtree.northeast, surface, pygame)
-        show(quadtree.northwest, surface, pygame)
-        show(quadtree.southeast, surface, pygame)
-        show(quadtree.southwest, surface, pygame)
+        show(quadtree.northeast, surface, search_boundary, contained_points, pygame)
+        show(quadtree.northwest, surface, search_boundary, contained_points, pygame)
+        show(quadtree.southeast, surface, search_boundary, contained_points, pygame)
+        show(quadtree.southwest, surface, search_boundary, contained_points, pygame)
 
+    if quadtree.level == 0:
+        print(search_boundary.x, search_boundary.y, search_boundary.w, search_boundary.h)
+        pygame.draw.rect(surface, [0, 255, 255], pygame.Rect(search_boundary.x, search_boundary.y, search_boundary.w, search_boundary.h), width=1)
+    
                 
 
 
@@ -112,16 +135,18 @@ def quadtree_test():
     WIDTH = 1200
     HEIGHT = 600
     boundary = Boundary(0, 0, WIDTH, HEIGHT)
-    search_boundary = Boundary(100, 70, 300, 200)
-
 
 
     import pygame, sys
     pygame.init()
     surface = pygame.display.set_mode((WIDTH,HEIGHT))
-
+    search_boundary = Boundary(-10, -10, 0, 0)
     myTree = QuadTree(boundary, 1, 0)
-    
+    redraw = True
+    contained_points = []
+    fps = 60
+    clock = pygame.time.Clock()
+    init_pos = [0, 0]
 
     
 
@@ -136,14 +161,25 @@ def quadtree_test():
 
             if pygame.mouse.get_pressed()[0]:
                 myTree.insert_point(pos)
-                show(myTree, surface, pygame)
-                pygame.display.flip()
+                redraw = True
 
-            if pygame.mouse.get_pressed()[2]:
-                pygame.draw.rect(surface, [0, 255, 255], pygame.Rect(search_boundary.x, search_boundary.y, search_boundary.w, search_boundary.h), width=1)
+            if pygame.mouse.get_pressed()[1]:
+                search_boundary = Boundary(init_pos[0], init_pos[1], pos[0]-init_pos[0], pos[1]-init_pos[1])
+                redraw = True
+
+
+            if event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[1]:
+                init_pos = pos
+                search_boundary = Boundary(init_pos[0], init_pos[1], 0, 0)
+
+
+            if redraw:
+                show(myTree, surface, search_boundary, contained_points, pygame)  
                 pygame.display.flip()
-                contained_points = myTree.return_contained_points(search_boundary, [])
-                print(contained_points)
+                redraw = False              
+                
+
+        clock.tick(fps)
 
 
 if __name__ == "__main__":
