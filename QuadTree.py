@@ -39,6 +39,7 @@ class QuadTree():
         self.divided = False
         self.num_entities = 0
         self.level = level
+        self.num_checks = 0
 
     def subdivide(self):
         boundary = Boundary(self.boundary.x + self.boundary.w/2, self.boundary.y, self.boundary.w/2, self.boundary.h/2)
@@ -92,9 +93,14 @@ class QuadTree():
     
 
     def intersects(self, search_boundary):
-        if self.boundary.type == 'rect':
-            if (search_boundary.x > self.boundary.x) and (search_boundary.x < self.boundary.x + self.boundary.w):
-                if (search_boundary.y > self.boundary.y) and (search_boundary.y < self.boundary.y + self.boundary.h):
+        if search_boundary.type == 'rect':
+            if (search_boundary.x < self.boundary.x + self.boundary.w) and (search_boundary.x + search_boundary.w > self.boundary.x):
+                if (search_boundary.y < self.boundary.y + self.boundary.h) and (search_boundary.y + search_boundary.h > self.boundary.y):
+                    return True
+        
+        if search_boundary.type == 'circle':
+            if (search_boundary.x - search_boundary.r < self.boundary.x + self.boundary.w) and (search_boundary.x + search_boundary.r > self.boundary.x):
+                if (search_boundary.y - search_boundary.r < self.boundary.y + self.boundary.h) and (search_boundary.y + search_boundary.r > self.boundary.y):
                     return True
                
         return False
@@ -108,7 +114,8 @@ class QuadTree():
             return contained_entities
         
         for entity in self.entities:
-            contained_entities.append(entity)
+            if self.within_bounds(search_boundary, entity):
+                contained_entities.append(entity)
 
 
         if self.divided:
@@ -116,21 +123,20 @@ class QuadTree():
             contained_entities.extend(self.northwest.return_contained_entities(search_boundary))
             contained_entities.extend(self.southeast.return_contained_entities(search_boundary))
             contained_entities.extend(self.southwest.return_contained_entities(search_boundary))
-
+        
         return contained_entities
 
 
 
     def return_nearest_neighbor(self, entity, search_boundary, entity_list):
 
-        if search_boundary != None:
-            pass
-            #entity_list = self.return_contained_entities(search_boundary, contained_entities=[])
+        if entity_list == None:
+            entity_list = self.return_contained_entities(search_boundary)
 
 
         def calc_distance(entity, pos, min_distance, entity_found):
             distance = math.sqrt((entity.x - pos[0]) ** 2 + (entity.y - pos[1]) ** 2)
-            #distance = (entity.x - pos[0]) + (entity.y - pos[1])
+            self.num_checks += 1
             if distance < min_distance and distance > 0:
                 entity_found = entity
                 min_distance = distance                

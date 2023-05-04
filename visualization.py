@@ -51,14 +51,14 @@ def show(quadtree, surface, search_boundary, contained_entities, draw_NN):
     if quadtree.level == 0:
 
         if draw_NN:
-            entity_list = quadtree.return_contained_entities(search_boundary, contained_entities=[])
+            entity_list = quadtree.return_contained_entities(search_boundary)
 
-            if entity_list != None:
-                for entity in entity_list:
-                    closest_entity, min_distance = quadtree.return_nearest_neighbor(entity, search_boundary, entity_list)
-                    if closest_entity != None:
-                        pygame.draw.line(surface, [255, 255, 0], [closest_entity.x, closest_entity.y], [entity.x, entity.y])
-            print(len(entity_list))
+            for entity in entity_list:
+                closest_entity, min_distance = quadtree.return_nearest_neighbor(entity, search_boundary, entity_list)
+                if closest_entity != None:
+                    pygame.draw.line(surface, [255, 255, 0], [closest_entity.x, closest_entity.y], [entity.x, entity.y])
+
+            print(len(entity_list), quadtree.num_checks)
 
 
         if search_boundary.type == 'rect':
@@ -104,7 +104,8 @@ def quadtree_test():
             # If middle mouse button is pressed, calculate nearest-neighbor
             if pygame.mouse.get_pressed()[1]:
                 for i in range(0,1000):            
-                    myTree.insert_entity(Entity(random.randint(0,WIDTH), random.randint(0,HEIGHT)))
+                    #myTree.insert_entity(Entity(random.randint(0,WIDTH), random.randint(0,HEIGHT)))
+                    pass
                 redraw = True
 
                 draw_NN = True
@@ -136,6 +137,7 @@ def quadtree_test():
         if redraw:
             contained_entities = myTree.return_contained_entities(search_boundary)
             print('contained', contained_entities)
+            myTree.num_checks = 0
             show(myTree, surface, search_boundary, contained_entities, draw_NN)
             pygame.display.flip()
             redraw = False    
