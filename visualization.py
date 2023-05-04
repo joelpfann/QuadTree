@@ -134,7 +134,8 @@ def quadtree_test():
 
         # Re-draw if necessary
         if redraw:
-            contained_entities = myTree.return_contained_entities(search_boundary, contained_entities=[])
+            contained_entities = myTree.return_contained_entities(search_boundary)
+            print('contained', contained_entities)
             show(myTree, surface, search_boundary, contained_entities, draw_NN)
             pygame.display.flip()
             redraw = False    
